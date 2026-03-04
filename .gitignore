@@ -1,0 +1,20 @@
+# dependencies
+node_modules/
+**/node_modules/
+
+# build outputs
+**/dist/
+
+# playwright artifacts
+**/playwright-report/
+**/test-results/
+
+# laravel/composer artifacts in fixtures
+fixtures/consumer-laravel-app/vendor/
+fixtures/consumer-laravel-app/composer.lock
+
+# auth/runtime fixture outputs
+fixtures/**/tests/e2e/.auth/*.json
+
+# logs
+*.log
