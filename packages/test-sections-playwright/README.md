@@ -33,12 +33,28 @@ export default defineConfig({
 });
 ```
 
+### Supported Config Fields (enforced by CLI)
+
+- `sections[]`
+- `sections[].id`
+- `sections[].testFiles` (explicit file list)
+- `sections[].testMatch` (glob-like pattern)
+- `sections[].serial`
+- `sections[].grep`
+- `sections[].projects`
+- `defaults.configPath`
+- `defaults.parallel`
+- `defaults.shard`
+
+Fields outside the list above are allowed by TypeScript only if you extend locally, but are ignored by the current CLI runtime.
+
 ## CLI
 
 ```bash
 haakco-test-sections --help
 haakco-test-sections --list
 haakco-test-sections --validate -c ./e2e-sections.config.ts
+haakco-test-sections run -c ./e2e-sections.config.ts
 haakco-test-sections --section smoke --parallel 3 --shard 1/2
 ```
 
@@ -52,6 +68,8 @@ haakco-test-sections --section smoke --parallel 3 --shard 1/2
 - `--shard <x/y>`: forward shard value to Playwright
 - `--help`, `-h`: show usage
 
+`run` is an optional command token for readability and compatibility (for example `haakco-test-sections run --parallel 2`).
+
 ### Execution model
 
 - Config is loaded via dynamic import from `--config` (or default in current working directory).
@@ -59,3 +77,15 @@ haakco-test-sections --section smoke --parallel 3 --shard 1/2
 - Non-serial sections run concurrently up to `--parallel`/`defaults.parallel`.
 - Serial sections run one-by-one.
 - Any validation or section failure exits non-zero with a clear error message.
+
+## tl-web-gui Notes
+
+For TrackLab migration specifics, use:
+
+- [`../../docs/tl-web-gui-migration.md`](../../docs/tl-web-gui-migration.md)
+
+Important current behavior for tl-web-gui:
+
+- CLI forwards shard values to Playwright (`--shard x/y`).
+- CLI does not currently implement custom modulo sharding logic itself.
+- Duration budgets and role metadata should currently be enforced by companion scripts in the consumer repo.
