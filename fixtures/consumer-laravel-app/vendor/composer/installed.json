@@ -1,0 +1,32 @@
+{
+    "packages": [
+        {
+            "name": "haakco/test-sections-laravel",
+            "version": "dev-main",
+            "version_normalized": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "../../packages/test-sections-laravel",
+                "reference": "91e8ad41c32e5c34744ac0f7280f9fe66d088202"
+            },
+            "require": {
+                "php": ">=8.2"
+            },
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Haakco\\TestSections\\": "src/"
+                }
+            },
+            "description": "Laravel adapter package for HaakCo test sections",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            },
+            "install-path": "../haakco/test-sections-laravel"
+        }
+    ],
+    "dev": true,
+    "dev-package-names": []
+}

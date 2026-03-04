@@ -1,0 +1,39 @@
+{
+  "name": "@haakco/test-sections-playwright",
+  "version": "0.1.0",
+  "description": "Lightweight config-driven test section runner primitives for Playwright",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "haakco-test-sections": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "pnpm exec tsc -p tsconfig.json --types node",
+    "typecheck": "pnpm exec tsc -p tsconfig.json --noEmit --types node"
+  },
+  "keywords": [
+    "playwright",
+    "testing",
+    "sections",
+    "haakco"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2",
+    "@types/node": "^22.13.10"
+  }
+}

@@ -1,0 +1,44 @@
+name: Portability Consumers
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  portability-consumers:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash --noprofile --norc -euo pipefail {0}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.6.2
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+
+      - name: Run quality gates
+        run: ci/quality/run-quality-gates.sh
+
+      - name: Upload portability results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: portability-results
+          path: PORTABILITY_RESULTS.md
+          if-no-files-found: error

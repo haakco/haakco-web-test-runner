@@ -1,0 +1,13 @@
+{
+  "name": "haakco/test-sections-laravel",
+  "description": "Laravel adapter package for HaakCo test sections",
+  "type": "library",
+  "require": {
+    "php": ">=8.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "Haakco\\TestSections\\": "src/"
+    }
+  }
+}

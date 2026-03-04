@@ -1,0 +1,237 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://haakco.dev/schemas/test-runner/sections.schema.json",
+  "title": "HaakCo Test Runner Sections Contract",
+  "description": "Contract for section manifests, runner options, and execution reports.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["manifest"],
+  "properties": {
+    "manifest": {
+      "$ref": "#/$defs/manifest"
+    },
+    "options": {
+      "$ref": "#/$defs/runnerOptions"
+    },
+    "result": {
+      "$ref": "#/$defs/resultReport"
+    }
+  },
+  "$defs": {
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "generatedAt", "sections"],
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "Manifest contract version.",
+          "minLength": 1
+        },
+        "generatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "UTC timestamp for manifest generation."
+        },
+        "suite": {
+          "type": "string",
+          "description": "Optional suite identifier.",
+          "minLength": 1
+        },
+        "sections": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/section"
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Arbitrary metadata for tooling.",
+          "additionalProperties": true
+        }
+      }
+    },
+    "section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9._-]+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "config": {
+          "type": "object",
+          "description": "Section-specific runner configuration.",
+          "additionalProperties": true
+        }
+      }
+    },
+    "runnerOptions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dryRun": {
+          "type": "boolean",
+          "default": false
+        },
+        "parallel": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "timeoutMs": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 30000
+        },
+        "retries": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "include": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "exclude": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "resultReport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "startedAt", "finishedAt", "summary"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["passed", "failed", "cancelled", "timed_out"]
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finishedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["total", "passed", "failed", "skipped", "durationMs"],
+          "properties": {
+            "total": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "passed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "failed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "skipped": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "durationMs": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sectionResult"
+          }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/errorRecord"
+          }
+        }
+      }
+    },
+    "sectionResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status", "durationMs"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": ["passed", "failed", "skipped"]
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "message": {
+          "type": "string"
+        },
+        "artifacts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "errorRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sectionId": {
+          "type": "string"
+        },
+        "details": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

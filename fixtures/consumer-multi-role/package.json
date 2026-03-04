@@ -1,0 +1,17 @@
+{
+  "name": "@haakco-fixtures/consumer-multi-role",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "verify:sections": "node ./scripts/verify-sections.mjs",
+    "validate:durations": "node ./scripts/verify-sections.mjs --durations",
+    "list:sections": "haakco-test-sections --list --config ./e2e-sections.config.ts",
+    "run:e2e": "playwright test -c ./playwright.config.ts",
+    "run:sections": "sh -c 'haakco-test-sections --config ./e2e-sections.config.ts --parallel ${SECTIONS_PARALLEL:-2} ${SECTIONS_SHARD:+--shard $SECTIONS_SHARD}'"
+  },
+  "devDependencies": {
+    "@haakco/test-sections-playwright": "workspace:*",
+    "@playwright/test": "^1.52.0"
+  }
+}

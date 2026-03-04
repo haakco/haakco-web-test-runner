@@ -1,0 +1,15 @@
+{
+  "name": "@haakco/fixture-consumer-simple",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "verify:sections": "haakco-test-sections --validate --config ./e2e-sections.config.ts",
+    "test:sections": "haakco-test-sections run --parallel 2 --config ./e2e-sections.config.ts",
+    "test:sections:list": "haakco-test-sections --list --config ./e2e-sections.config.ts"
+  },
+  "devDependencies": {
+    "@haakco/test-sections-playwright": "workspace:*",
+    "@playwright/test": "^1.52.0"
+  }
+}

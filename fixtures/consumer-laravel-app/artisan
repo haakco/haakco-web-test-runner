@@ -1,0 +1,88 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+$root = __DIR__;
+$configFile = $root . '/config/test-sections.php';
+$smokeFile = $root . '/tests/smoke.php';
+
+function fail(string $message, int $code = 1): never
+{
+    fwrite(STDERR, $message . PHP_EOL);
+    exit($code);
+}
+
+function usage(): string
+{
+    return implode(PHP_EOL, [
+        'Usage:',
+        '  php artisan test-sections:list',
+        '  php artisan test-sections:run --parallel=<n>',
+    ]);
+}
+
+if ($argc < 2) {
+    fail(usage());
+}
+
+$command = $argv[1];
+$args = array_slice($argv, 2);
+
+if (!file_exists($configFile)) {
+    fail('Missing config file: config/test-sections.php');
+}
+
+$config = require $configFile;
+if (!is_array($config) || !isset($config['sections']) || !is_array($config['sections'])) {
+    fail('Invalid config shape in config/test-sections.php');
+}
+
+$sections = $config['sections'];
+
+switch ($command) {
+    case 'test-sections:list':
+        if ($args !== []) {
+            fail('Unexpected arguments for test-sections:list' . PHP_EOL . usage());
+        }
+
+        echo "test-sections:list" . PHP_EOL;
+        foreach ($sections as $name => $meta) {
+            $label = is_array($meta) && isset($meta['description']) ? (string) $meta['description'] : '';
+            echo '- ' . $name;
+            if ($label !== '') {
+                echo ': ' . $label;
+            }
+            echo PHP_EOL;
+        }
+        exit(0);
+
+    case 'test-sections:run':
+        if (count($args) !== 1 || !str_starts_with($args[0], '--parallel=')) {
+            fail('Expected exactly one argument: --parallel=<n>' . PHP_EOL . usage());
+        }
+
+        $parallel = (int) substr($args[0], strlen('--parallel='));
+        if ((string) $parallel !== substr($args[0], strlen('--parallel=')) || $parallel < 1) {
+            fail('Invalid parallel value. Use a positive integer.');
+        }
+
+        if (!file_exists($smokeFile)) {
+            fail('Missing smoke test file: tests/smoke.php');
+        }
+
+        echo "test-sections:run" . PHP_EOL;
+        echo 'parallel=' . $parallel . PHP_EOL;
+        echo 'Simulating package integration for haakco/test-sections-laravel...' . PHP_EOL;
+
+        $result = include $smokeFile;
+        if ($result === false) {
+            fail('Smoke test failed.');
+        }
+
+        echo 'Smoke test passed.' . PHP_EOL;
+        exit(0);
+
+    default:
+        fail('Unknown command: ' . $command . PHP_EOL . usage());
+}
