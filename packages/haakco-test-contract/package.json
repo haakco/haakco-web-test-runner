@@ -1,6 +1,6 @@
 {
   "name": "haakco-test-contract",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Shared JSON schema contract for HaakCo test runner sections",
   "license": "MIT",
   "type": "module",

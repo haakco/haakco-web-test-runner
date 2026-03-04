@@ -1,6 +1,6 @@
 {
   "name": "@haakco/test-sections-playwright",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Lightweight config-driven test section runner primitives for Playwright",
   "license": "MIT",
   "type": "module",
