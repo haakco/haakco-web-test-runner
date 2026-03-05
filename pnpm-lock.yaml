@@ -9,10 +9,10 @@ importers:
   .:
     devDependencies:
       '@changesets/cli':
-        specifier: ^2.28.1
+        specifier: ^2.30.0
         version: 2.30.0(@types/node@22.19.13)
       typescript:
-        specifier: ^5.7.3
+        specifier: ^5.9.3
         version: 5.9.3
 
   fixtures/consumer-multi-role:
