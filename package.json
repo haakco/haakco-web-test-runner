@@ -1,5 +1,5 @@
 {
-  "name": "haakco-test-runner",
+  "name": "haakco-web-test-runner",
   "private": true,
   "version": "0.0.0",
   "packageManager": "pnpm@10.6.2",
