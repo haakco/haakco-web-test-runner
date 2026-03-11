@@ -2,9 +2,21 @@
   "name": "haakco-web-test-runner",
   "private": true,
   "version": "0.0.0",
+  "type": "module",
   "packageManager": "pnpm@10.30.3",
+  "main": "./packages/test-sections-playwright/dist/index.js",
+  "types": "./packages/test-sections-playwright/dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./packages/test-sections-playwright/dist/index.d.ts",
+      "import": "./packages/test-sections-playwright/dist/index.js"
+    }
+  },
+  "bin": {
+    "haakco-test-sections": "./packages/test-sections-playwright/dist/cli.js"
+  },
   "scripts": {
-    "build": "echo \"build placeholder\"",
+    "build": "cd packages/test-sections-playwright && pnpm exec tsc -p tsconfig.json --types node",
     "build:packages": "pnpm -r build",
     "test": "echo \"test placeholder\"",
     "test:packages": "pnpm -r --if-present test",

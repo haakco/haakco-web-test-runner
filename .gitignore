@@ -2,8 +2,8 @@
 node_modules/
 **/node_modules/
 
-# build outputs
-**/dist/
+# build outputs (except packages we distribute via git)
+fixtures/**/dist/
 
 # playwright artifacts
 **/playwright-report/
