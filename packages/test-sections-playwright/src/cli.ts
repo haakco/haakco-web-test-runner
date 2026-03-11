@@ -21,7 +21,7 @@ interface CoverageResult {
   discoveredFiles: string[];
 }
 
-function parseArgs(argv: string[]): CliOptions {
+function parseArgs(rawArgv: string[]): CliOptions {
   const options: CliOptions = {
     list: false,
     validate: false,
@@ -29,12 +29,12 @@ function parseArgs(argv: string[]): CliOptions {
     help: false,
   };
 
+  // Strip bare '--' tokens so pnpm passthrough separators don't interfere
+  // with flag-value parsing (e.g. --section -- value)
+  const argv = rawArgv.filter((arg) => arg !== '--');
+
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
-
-    if (arg === '--') {
-      continue;
-    }
 
     if (arg === 'run') {
       continue;

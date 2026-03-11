@@ -4,18 +4,18 @@ import { readdir } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 const DEFAULT_CONFIG_FILE = 'e2e-sections.config.ts';
-function parseArgs(argv) {
+function parseArgs(rawArgv) {
     const options = {
         list: false,
         validate: false,
         sectionIds: [],
         help: false,
     };
+    // Strip bare '--' tokens so pnpm passthrough separators don't interfere
+    // with flag-value parsing (e.g. --section -- value)
+    const argv = rawArgv.filter((arg) => arg !== '--');
     for (let i = 0; i < argv.length; i += 1) {
         const arg = argv[i];
-        if (arg === '--') {
-            continue;
-        }
         if (arg === 'run') {
             continue;
         }
