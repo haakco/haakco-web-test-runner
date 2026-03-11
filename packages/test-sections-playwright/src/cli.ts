@@ -21,6 +21,13 @@ interface CoverageResult {
   discoveredFiles: string[];
 }
 
+interface SectionResult {
+  sectionId: string;
+  status: 'passed' | 'failed';
+  durationMs: number;
+  exitCode: number | null;
+}
+
 function parseArgs(rawArgv: string[]): CliOptions {
   const options: CliOptions = {
     list: false,
@@ -311,7 +318,7 @@ async function runPlaywrightSection(
   projectRoot: string,
   playwrightConfigPath: string,
   shard?: string,
-): Promise<void> {
+): Promise<SectionResult> {
   const args = ['exec', 'playwright', 'test', '-c', playwrightConfigPath];
 
   const selectors = sectionArgs(section);
@@ -329,51 +336,81 @@ async function runPlaywrightSection(
     args.push('--shard', shard);
   }
 
-  process.stdout.write(`\n==> Running section ${section.id}\n`);
+  process.stdout.write(`\n==> Running section "${section.id}"${section.serial ? ' (serial)' : ''}\n`);
+  const startTime = Date.now();
 
-  await new Promise<void>((resolve, reject) => {
+  const exitCode = await new Promise<number | null>((resolve, reject) => {
     const child = spawn('pnpm', args, {
       stdio: 'inherit',
       cwd: projectRoot,
       env: process.env,
     });
 
-    child.on('error', (error) => {
+    child.on('error', (error: NodeJS.ErrnoException) => {
+      if (error.code === 'ENOENT') {
+        reject(new Error(`"pnpm" not found. The CLI requires pnpm to be installed and in PATH.`));
+        return;
+      }
       reject(new Error(`Failed to start Playwright for section "${section.id}": ${error.message}`));
     });
 
     child.on('close', (code) => {
-      if (code === 0) {
-        resolve();
-        return;
-      }
-
-      reject(new Error(`Section "${section.id}" failed with exit code ${code ?? 'unknown'}`));
+      resolve(code);
     });
   });
+
+  const durationMs = Date.now() - startTime;
+  const status = exitCode === 0 ? 'passed' : 'failed';
+
+  const durationLabel = formatDuration(durationMs);
+  const statusLabel = status === 'passed' ? '✓ PASSED' : '✗ FAILED';
+  process.stdout.write(`<== Section "${section.id}" ${statusLabel} (${durationLabel})\n`);
+
+  return { sectionId: section.id, status, durationMs, exitCode };
+}
+
+function formatDuration(ms: number): string {
+  if (ms < 1000) return `${ms}ms`;
+  const seconds = ms / 1000;
+  if (seconds < 60) return `${seconds.toFixed(1)}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.round(seconds % 60);
+  return `${minutes}m ${remainingSeconds}s`;
 }
 
 async function runConcurrentSections(
   sections: PlaywrightTestSection[],
   concurrency: number,
-  runner: (section: PlaywrightTestSection) => Promise<void>,
-): Promise<void> {
+  runner: (section: PlaywrightTestSection) => Promise<SectionResult>,
+): Promise<SectionResult[]> {
   if (sections.length === 0) {
-    return;
+    return [];
   }
 
+  const results: SectionResult[] = [];
   let nextIndex = 0;
 
   async function worker(): Promise<void> {
     while (nextIndex < sections.length) {
       const current = nextIndex;
       nextIndex += 1;
-      await runner(sections[current]);
+      try {
+        const result = await runner(sections[current]);
+        results.push(result);
+      } catch (error) {
+        results.push({
+          sectionId: sections[current].id,
+          status: 'failed',
+          durationMs: 0,
+          exitCode: null,
+        });
+      }
     }
   }
 
   const workers = Array.from({ length: Math.min(concurrency, sections.length) }, () => worker());
   await Promise.all(workers);
+  return results;
 }
 
 function selectSections(allSections: PlaywrightTestSection[], sectionIds: string[]): PlaywrightTestSection[] {
@@ -437,13 +474,52 @@ async function run(): Promise<void> {
   const nonSerialSections = selectedSections.filter((section) => !section.serial);
   const serialSections = selectedSections.filter((section) => section.serial);
 
-  await runConcurrentSections(nonSerialSections, maxParallel, async (section) => {
-    await runPlaywrightSection(section, loaded.projectRoot, loaded.playwrightConfigPath, shard);
+  const runStartTime = Date.now();
+  const allResults: SectionResult[] = [];
+
+  process.stdout.write(`\n━━━ Running ${selectedSections.length} section(s) (parallel=${maxParallel}) ━━━\n`);
+
+  const concurrentResults = await runConcurrentSections(nonSerialSections, maxParallel, async (section) => {
+    return runPlaywrightSection(section, loaded.projectRoot, loaded.playwrightConfigPath, shard);
   });
+  allResults.push(...concurrentResults);
 
   for (const section of serialSections) {
-    await runPlaywrightSection(section, loaded.projectRoot, loaded.playwrightConfigPath, shard);
+    const result = await runPlaywrightSection(section, loaded.projectRoot, loaded.playwrightConfigPath, shard);
+    allResults.push(result);
   }
+
+  printSummary(allResults, Date.now() - runStartTime);
+
+  const hasFailures = allResults.some((result) => result.status === 'failed');
+  if (hasFailures) {
+    throw new Error('One or more sections failed');
+  }
+}
+
+function printSummary(results: SectionResult[], totalMs: number): void {
+  const passed = results.filter((r) => r.status === 'passed');
+  const failed = results.filter((r) => r.status === 'failed');
+
+  process.stdout.write(`\n━━━ Section Summary ━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
+
+  for (const result of results) {
+    const icon = result.status === 'passed' ? '✓' : '✗';
+    const duration = formatDuration(result.durationMs);
+    process.stdout.write(`  ${icon} ${result.sectionId} (${duration})\n`);
+  }
+
+  process.stdout.write(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
+  process.stdout.write(`  ${passed.length} passed, ${failed.length} failed | Total: ${formatDuration(totalMs)}\n`);
+
+  if (failed.length > 0) {
+    process.stdout.write(`\n  Failed sections:\n`);
+    for (const f of failed) {
+      process.stdout.write(`    ✗ ${f.sectionId} (exit code ${f.exitCode ?? 'unknown'})\n`);
+    }
+  }
+
+  process.stdout.write(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`);
 }
 
 async function main(): Promise<void> {
