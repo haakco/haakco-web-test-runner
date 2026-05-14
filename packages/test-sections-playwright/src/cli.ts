@@ -2,8 +2,8 @@
 
 import { spawn } from 'node:child_process';
 import { readdir } from 'node:fs/promises';
-import { pathToFileURL } from 'node:url';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import type { CliOptions, PlaywrightSectionsConfig, PlaywrightTestSection } from './types.js';
 
 const DEFAULT_CONFIG_FILE = 'e2e-sections.config.ts';
@@ -67,14 +67,24 @@ function parseArgs(rawArgv: string[]): CliOptions {
       if (!value) {
         throw new Error('Missing value for --section');
       }
-      options.sectionIds.push(...value.split(',').map((entry) => entry.trim()).filter(Boolean));
+      options.sectionIds.push(
+        ...value
+          .split(',')
+          .map((entry) => entry.trim())
+          .filter(Boolean),
+      );
       i += 1;
       continue;
     }
 
     if (arg.startsWith('--section=')) {
       const value = arg.split('=')[1] ?? '';
-      options.sectionIds.push(...value.split(',').map((entry) => entry.trim()).filter(Boolean));
+      options.sectionIds.push(
+        ...value
+          .split(',')
+          .map((entry) => entry.trim())
+          .filter(Boolean),
+      );
       continue;
     }
 
@@ -143,10 +153,14 @@ function printHelp(): void {
   process.stdout.write(`Options:\n`);
   process.stdout.write(`  --list               List configured test sections\n`);
   process.stdout.write(`  --validate           Validate section coverage by files\n`);
-  process.stdout.write(`  --section <name>     Run only one or more section ids (repeat or comma-separated)\n`);
+  process.stdout.write(
+    `  --section <name>     Run only one or more section ids (repeat or comma-separated)\n`,
+  );
   process.stdout.write(`  --parallel <n>       Max concurrent non-serial sections\n`);
   process.stdout.write(`  --shard <x/y>        Forward shard to Playwright\n`);
-  process.stdout.write(`  -c, --config <path>  Section config path (default: ./e2e-sections.config.ts)\n`);
+  process.stdout.write(
+    `  -c, --config <path>  Section config path (default: ./e2e-sections.config.ts)\n`,
+  );
   process.stdout.write(`  -h, --help           Show help\n`);
 }
 
@@ -157,7 +171,9 @@ async function loadSectionsConfig(configPathArg?: string): Promise<LoadedConfig>
   const sectionsConfig = imported.default as PlaywrightSectionsConfig | undefined;
 
   if (!sectionsConfig || !Array.isArray(sectionsConfig.sections)) {
-    throw new Error(`Invalid sections config at ${sectionsConfigPath}: default export with sections[] is required`);
+    throw new Error(
+      `Invalid sections config at ${sectionsConfigPath}: default export with sections[] is required`,
+    );
   }
 
   const playwrightConfigRaw = sectionsConfig.defaults?.configPath ?? './playwright.config.ts';
@@ -167,7 +183,9 @@ async function loadSectionsConfig(configPathArg?: string): Promise<LoadedConfig>
   const playwrightConfig = playwrightImported.default as { testDir?: string } | undefined;
 
   if (!playwrightConfig || typeof playwrightConfig !== 'object') {
-    throw new Error(`Invalid Playwright config at ${playwrightConfigPath}: default export is required`);
+    throw new Error(
+      `Invalid Playwright config at ${playwrightConfigPath}: default export is required`,
+    );
   }
 
   const testDirRaw = playwrightConfig.testDir ?? './tests';
@@ -235,7 +253,11 @@ function resolveSectionFiles(
     }
   }
 
-  const matches = section.testMatch ? (Array.isArray(section.testMatch) ? section.testMatch : [section.testMatch]) : [];
+  const matches = section.testMatch
+    ? Array.isArray(section.testMatch)
+      ? section.testMatch
+      : [section.testMatch]
+    : [];
 
   for (const pattern of matches) {
     const regex = globToRegExp(normalizePath(pattern));
@@ -305,7 +327,11 @@ function sectionArgs(section: PlaywrightTestSection): string[] {
     args.push(file);
   }
 
-  const matches = section.testMatch ? (Array.isArray(section.testMatch) ? section.testMatch : [section.testMatch]) : [];
+  const matches = section.testMatch
+    ? Array.isArray(section.testMatch)
+      ? section.testMatch
+      : [section.testMatch]
+    : [];
   for (const match of matches) {
     args.push(match);
   }
@@ -336,7 +362,9 @@ async function runPlaywrightSection(
     args.push('--shard', shard);
   }
 
-  process.stdout.write(`\n==> Running section "${section.id}"${section.serial ? ' (serial)' : ''}\n`);
+  process.stdout.write(
+    `\n==> Running section "${section.id}"${section.serial ? ' (serial)' : ''}\n`,
+  );
   const startTime = Date.now();
 
   const exitCode = await new Promise<number | null>((resolve, reject) => {
@@ -397,7 +425,7 @@ async function runConcurrentSections(
       try {
         const result = await runner(sections[current]);
         results.push(result);
-      } catch (error) {
+      } catch (_error) {
         results.push({
           sectionId: sections[current].id,
           status: 'failed',
@@ -413,7 +441,10 @@ async function runConcurrentSections(
   return results;
 }
 
-function selectSections(allSections: PlaywrightTestSection[], sectionIds: string[]): PlaywrightTestSection[] {
+function selectSections(
+  allSections: PlaywrightTestSection[],
+  sectionIds: string[],
+): PlaywrightTestSection[] {
   if (sectionIds.length === 0) {
     return allSections;
   }
@@ -421,7 +452,9 @@ function selectSections(allSections: PlaywrightTestSection[], sectionIds: string
   const wanted = new Set(sectionIds);
   const selected = allSections.filter((section) => wanted.has(section.id));
 
-  const missing = sectionIds.filter((sectionId) => !selected.some((section) => section.id === sectionId));
+  const missing = sectionIds.filter(
+    (sectionId) => !selected.some((section) => section.id === sectionId),
+  );
   if (missing.length > 0) {
     throw new Error(`Unknown section id(s): ${missing.join(', ')}`);
   }
@@ -455,7 +488,12 @@ async function run(): Promise<void> {
   const discoveredFiles = await discoverSpecFiles(loaded.testDirAbsolute);
 
   if (options.validate) {
-    const result = validateCoverage(allSections, discoveredFiles, loaded.testDirAbsolute, loaded.projectRoot);
+    const result = validateCoverage(
+      allSections,
+      discoveredFiles,
+      loaded.testDirAbsolute,
+      loaded.projectRoot,
+    );
     if (result.errors.length > 0) {
       for (const error of result.errors) {
         process.stderr.write(`${error}\n`);
@@ -463,7 +501,9 @@ async function run(): Promise<void> {
       throw new Error(`Coverage validation failed with ${result.errors.length} error(s)`);
     }
 
-    process.stdout.write(`Coverage validation passed (${result.discoveredFiles.length} spec files).\n`);
+    process.stdout.write(
+      `Coverage validation passed (${result.discoveredFiles.length} spec files).\n`,
+    );
     return;
   }
 
@@ -477,15 +517,26 @@ async function run(): Promise<void> {
   const runStartTime = Date.now();
   const allResults: SectionResult[] = [];
 
-  process.stdout.write(`\n━━━ Running ${selectedSections.length} section(s) (parallel=${maxParallel}) ━━━\n`);
+  process.stdout.write(
+    `\n━━━ Running ${selectedSections.length} section(s) (parallel=${maxParallel}) ━━━\n`,
+  );
 
-  const concurrentResults = await runConcurrentSections(nonSerialSections, maxParallel, async (section) => {
-    return runPlaywrightSection(section, loaded.projectRoot, loaded.playwrightConfigPath, shard);
-  });
+  const concurrentResults = await runConcurrentSections(
+    nonSerialSections,
+    maxParallel,
+    async (section) => {
+      return runPlaywrightSection(section, loaded.projectRoot, loaded.playwrightConfigPath, shard);
+    },
+  );
   allResults.push(...concurrentResults);
 
   for (const section of serialSections) {
-    const result = await runPlaywrightSection(section, loaded.projectRoot, loaded.playwrightConfigPath, shard);
+    const result = await runPlaywrightSection(
+      section,
+      loaded.projectRoot,
+      loaded.playwrightConfigPath,
+      shard,
+    );
     allResults.push(result);
   }
 
@@ -510,7 +561,9 @@ function printSummary(results: SectionResult[], totalMs: number): void {
   }
 
   process.stdout.write(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
-  process.stdout.write(`  ${passed.length} passed, ${failed.length} failed | Total: ${formatDuration(totalMs)}\n`);
+  process.stdout.write(
+    `  ${passed.length} passed, ${failed.length} failed | Total: ${formatDuration(totalMs)}\n`,
+  );
 
   if (failed.length > 0) {
     process.stdout.write(`\n  Failed sections:\n`);

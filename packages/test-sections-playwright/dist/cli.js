@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process';
 import { readdir } from 'node:fs/promises';
-import { pathToFileURL } from 'node:url';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 const DEFAULT_CONFIG_FILE = 'e2e-sections.config.ts';
 function parseArgs(rawArgv) {
     const options = {
@@ -36,13 +36,19 @@ function parseArgs(rawArgv) {
             if (!value) {
                 throw new Error('Missing value for --section');
             }
-            options.sectionIds.push(...value.split(',').map((entry) => entry.trim()).filter(Boolean));
+            options.sectionIds.push(...value
+                .split(',')
+                .map((entry) => entry.trim())
+                .filter(Boolean));
             i += 1;
             continue;
         }
         if (arg.startsWith('--section=')) {
             const value = arg.split('=')[1] ?? '';
-            options.sectionIds.push(...value.split(',').map((entry) => entry.trim()).filter(Boolean));
+            options.sectionIds.push(...value
+                .split(',')
+                .map((entry) => entry.trim())
+                .filter(Boolean));
             continue;
         }
         if (arg === '--parallel') {
@@ -171,7 +177,11 @@ function resolveSectionFiles(section, discoveredFiles, testDirAbsolute, projectR
             matched.add(absolute);
         }
     }
-    const matches = section.testMatch ? (Array.isArray(section.testMatch) ? section.testMatch : [section.testMatch]) : [];
+    const matches = section.testMatch
+        ? Array.isArray(section.testMatch)
+            ? section.testMatch
+            : [section.testMatch]
+        : [];
     for (const pattern of matches) {
         const regex = globToRegExp(normalizePath(pattern));
         for (const file of discoveredFiles) {
@@ -223,7 +233,11 @@ function sectionArgs(section) {
     for (const file of section.testFiles ?? []) {
         args.push(file);
     }
-    const matches = section.testMatch ? (Array.isArray(section.testMatch) ? section.testMatch : [section.testMatch]) : [];
+    const matches = section.testMatch
+        ? Array.isArray(section.testMatch)
+            ? section.testMatch
+            : [section.testMatch]
+        : [];
     for (const match of matches) {
         args.push(match);
     }
@@ -292,7 +306,7 @@ async function runConcurrentSections(sections, concurrency, runner) {
                 const result = await runner(sections[current]);
                 results.push(result);
             }
-            catch (error) {
+            catch (_error) {
                 results.push({
                     sectionId: sections[current].id,
                     status: 'failed',

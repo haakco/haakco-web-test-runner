@@ -20,11 +20,14 @@
     "build:packages": "pnpm -r build",
     "test": "echo \"test placeholder\"",
     "test:packages": "pnpm -r --if-present test",
-    "lint": "echo \"lint placeholder\"",
+    "lint": "pnpm exec biome check . --colors=off && pnpm -r --if-present typecheck",
+    "lint:biome": "pnpm exec biome check . --colors=off",
+    "lint:fix": "pnpm exec biome check . --write --colors=off",
     "version": "changeset version",
     "release": "changeset publish"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.13",
     "@changesets/cli": "^2.30.0",
     "typescript": "^5.9.3"
   }

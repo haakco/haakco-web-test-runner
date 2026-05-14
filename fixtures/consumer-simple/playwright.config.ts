@@ -7,6 +7,6 @@ export default defineConfig({
   fullyParallel: true,
   reporter: 'list',
   use: {
-    baseURL: 'about:blank'
-  }
+    baseURL: 'about:blank',
+  },
 });

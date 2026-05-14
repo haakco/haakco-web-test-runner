@@ -15,10 +15,7 @@ export default defineConfig({
         ['junit', { outputFile: 'test-results/junit.xml' }],
         ['json', { outputFile: 'test-results/results.json' }],
       ]
-    : [
-        ['list'],
-        ['html', { open: 'never', outputFolder: 'playwright-report' }],
-      ],
+    : [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
   use: {
     baseURL: process.env.BASE_URL ?? 'http://localhost:3000',
     trace: 'on-first-retry',
