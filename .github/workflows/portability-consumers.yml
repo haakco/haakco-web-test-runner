@@ -24,8 +24,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10.6.2
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -33,7 +31,7 @@ jobs:
           php-version: '8.3'
 
       - name: Run quality gates
-        run: ci/quality/run-quality-gates.sh
+        run: ./ci/quality/run-quality-gates.sh
 
       - name: Upload portability results
         if: always()

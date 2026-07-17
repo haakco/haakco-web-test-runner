@@ -5,10 +5,14 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build-packages:
     runs-on: self-hosted
+    defaults:
+      run:
+        shell: bash --noprofile --norc -euo pipefail {0}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,8 +25,17 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
 
-      - name: Install
-        run: pnpm install
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
 
       - name: Build packages
-        run: pnpm -r build
+        run: pnpm run build:packages
+
+      - name: Behavior tests
+        run: pnpm run test:packages
+
+      - name: Check release version contract
+        run: ./ci/release/check-version-contract.sh

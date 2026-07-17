@@ -18,11 +18,12 @@
   "scripts": {
     "build": "cd packages/test-sections-playwright && pnpm exec tsc -p tsconfig.json --types node",
     "build:packages": "pnpm -r build",
-    "test": "echo \"test placeholder\"",
+    "test": "pnpm run test:packages",
     "test:packages": "pnpm -r --if-present test",
     "lint": "pnpm exec biome check . --colors=off && pnpm -r --if-present typecheck",
     "lint:biome": "pnpm exec biome check . --colors=off",
     "lint:fix": "pnpm exec biome check . --write --colors=off",
+    "quality": "./ci/quality/run-quality-gates.sh",
     "version": "changeset version",
     "release": "changeset publish"
   },
