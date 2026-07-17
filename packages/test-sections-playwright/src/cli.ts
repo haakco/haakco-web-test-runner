@@ -1,12 +1,19 @@
 #!/usr/bin/env node
-
 import { spawn } from 'node:child_process';
-import { readdir } from 'node:fs/promises';
+import { readdir, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import type { SectionResult } from './runner.js';
+import {
+  buildSectionCommand,
+  DEFAULT_CONFIG_FILE,
+  formatDuration,
+  parseArgs,
+  runConcurrentSections,
+  selectSections,
+  validateCoverage,
+} from './runner.js';
 import type { CliOptions, PlaywrightSectionsConfig, PlaywrightTestSection } from './types.js';
-
-const DEFAULT_CONFIG_FILE = 'e2e-sections.config.ts';
 
 interface LoadedConfig {
   sectionsConfig: PlaywrightSectionsConfig;
@@ -14,154 +21,6 @@ interface LoadedConfig {
   projectRoot: string;
   playwrightConfigPath: string;
   testDirAbsolute: string;
-}
-
-interface CoverageResult {
-  errors: string[];
-  discoveredFiles: string[];
-}
-
-interface SectionResult {
-  sectionId: string;
-  status: 'passed' | 'failed';
-  durationMs: number;
-  exitCode: number | null;
-}
-
-function parseArgs(rawArgv: string[]): CliOptions {
-  const options: CliOptions = {
-    list: false,
-    validate: false,
-    sectionIds: [],
-    help: false,
-  };
-
-  // Strip bare '--' tokens so pnpm passthrough separators don't interfere
-  // with flag-value parsing (e.g. --section -- value)
-  const argv = rawArgv.filter((arg) => arg !== '--');
-
-  for (let i = 0; i < argv.length; i += 1) {
-    const arg = argv[i];
-
-    if (arg === 'run') {
-      continue;
-    }
-
-    if (arg === '--list') {
-      options.list = true;
-      continue;
-    }
-
-    if (arg === '--validate') {
-      options.validate = true;
-      continue;
-    }
-
-    if (arg === '--help' || arg === '-h') {
-      options.help = true;
-      continue;
-    }
-
-    if (arg === '--section') {
-      const value = argv[i + 1];
-      if (!value) {
-        throw new Error('Missing value for --section');
-      }
-      options.sectionIds.push(
-        ...value
-          .split(',')
-          .map((entry) => entry.trim())
-          .filter(Boolean),
-      );
-      i += 1;
-      continue;
-    }
-
-    if (arg.startsWith('--section=')) {
-      const value = arg.split('=')[1] ?? '';
-      options.sectionIds.push(
-        ...value
-          .split(',')
-          .map((entry) => entry.trim())
-          .filter(Boolean),
-      );
-      continue;
-    }
-
-    if (arg === '--parallel') {
-      const value = argv[i + 1];
-      if (!value) {
-        throw new Error('Missing value for --parallel');
-      }
-      options.parallel = parsePositiveInteger(value, '--parallel');
-      i += 1;
-      continue;
-    }
-
-    if (arg.startsWith('--parallel=')) {
-      options.parallel = parsePositiveInteger(arg.split('=')[1] ?? '', '--parallel');
-      continue;
-    }
-
-    if (arg === '--shard') {
-      const value = argv[i + 1];
-      if (!value) {
-        throw new Error('Missing value for --shard');
-      }
-      options.shard = value;
-      i += 1;
-      continue;
-    }
-
-    if (arg.startsWith('--shard=')) {
-      options.shard = arg.split('=')[1] ?? '';
-      continue;
-    }
-
-    if (arg === '--config' || arg === '-c') {
-      const value = argv[i + 1];
-      if (!value) {
-        throw new Error('Missing value for --config');
-      }
-      options.configPath = value;
-      i += 1;
-      continue;
-    }
-
-    if (arg.startsWith('--config=')) {
-      options.configPath = arg.split('=')[1] ?? '';
-      continue;
-    }
-
-    throw new Error(`Unknown argument: ${arg}`);
-  }
-
-  return options;
-}
-
-function parsePositiveInteger(value: string, flagName: string): number {
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isInteger(parsed) || parsed <= 0) {
-    throw new Error(`${flagName} must be a positive integer`);
-  }
-  return parsed;
-}
-
-function printHelp(): void {
-  process.stdout.write(`@haakco/test-sections-playwright\n\n`);
-  process.stdout.write(`Usage: haakco-test-sections [options]\n\n`);
-  process.stdout.write(`Options:\n`);
-  process.stdout.write(`  --list               List configured test sections\n`);
-  process.stdout.write(`  --validate           Validate section coverage by files\n`);
-  process.stdout.write(
-    `  --section <name>     Run only one or more section ids (repeat or comma-separated)\n`,
-  );
-  process.stdout.write(`  --parallel <n>       Max concurrent non-serial sections\n`);
-  process.stdout.write(`  --shard <x/y>        Forward shard to Playwright\n`);
-  process.stdout.write(
-    `  -c, --config <path>  Section config path (default: ./e2e-sections.config.ts)\n`,
-  );
-  process.stdout.write(`  -h, --help           Show help\n`);
 }
 
 async function loadSectionsConfig(configPathArg?: string): Promise<LoadedConfig> {
@@ -223,120 +82,21 @@ async function discoverSpecFiles(testDirAbsolute: string): Promise<string[]> {
   return discovered;
 }
 
-function normalizePath(value: string): string {
-  return value.split(path.sep).join('/');
-}
-
-function globToRegExp(glob: string): RegExp {
-  const escaped = glob
-    .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-    .replace(/\*\*/g, '::DOUBLE_STAR::')
-    .replace(/\*/g, '[^/]*')
-    .replace(/::DOUBLE_STAR::/g, '.*')
-    .replace(/\?/g, '.');
-
-  return new RegExp(`^${escaped}$`);
-}
-
-function resolveSectionFiles(
-  section: PlaywrightTestSection,
-  discoveredFiles: string[],
-  testDirAbsolute: string,
-  projectRoot: string,
-): Set<string> {
-  const matched = new Set<string>();
-
-  for (const file of section.testFiles ?? []) {
-    const absolute = path.resolve(projectRoot, file);
-    if (discoveredFiles.includes(absolute)) {
-      matched.add(absolute);
-    }
-  }
-
-  const matches = section.testMatch
-    ? Array.isArray(section.testMatch)
-      ? section.testMatch
-      : [section.testMatch]
-    : [];
-
-  for (const pattern of matches) {
-    const regex = globToRegExp(normalizePath(pattern));
-    for (const file of discoveredFiles) {
-      const relativeToTestDir = normalizePath(path.relative(testDirAbsolute, file));
-      const relativeToProjectRoot = normalizePath(path.relative(projectRoot, file));
-      if (regex.test(relativeToTestDir) || regex.test(relativeToProjectRoot)) {
-        matched.add(file);
-      }
-    }
-  }
-
-  return matched;
-}
-
-function validateCoverage(
-  sections: PlaywrightTestSection[],
-  discoveredFiles: string[],
-  testDirAbsolute: string,
-  projectRoot: string,
-): CoverageResult {
-  const errors: string[] = [];
-  const fileToSections = new Map<string, string[]>();
-
-  for (const file of discoveredFiles) {
-    fileToSections.set(file, []);
-  }
-
-  for (const section of sections) {
-    const matched = resolveSectionFiles(section, discoveredFiles, testDirAbsolute, projectRoot);
-    if (matched.size === 0) {
-      errors.push(`Section "${section.id}" does not match any discovered spec file`);
-    }
-
-    for (const file of matched) {
-      const owners = fileToSections.get(file);
-      if (!owners) {
-        continue;
-      }
-      owners.push(section.id);
-    }
-  }
-
-  for (const [file, owners] of fileToSections.entries()) {
-    const label = normalizePath(path.relative(projectRoot, file));
-
-    if (owners.length === 0) {
-      errors.push(`Unassigned spec file: ${label}`);
-      continue;
-    }
-
-    if (owners.length > 1) {
-      errors.push(`Spec file assigned to multiple sections: ${label} -> ${owners.join(', ')}`);
-    }
-  }
-
-  return {
-    errors,
-    discoveredFiles,
-  };
-}
-
-function sectionArgs(section: PlaywrightTestSection): string[] {
-  const args: string[] = [];
-
-  for (const file of section.testFiles ?? []) {
-    args.push(file);
-  }
-
-  const matches = section.testMatch
-    ? Array.isArray(section.testMatch)
-      ? section.testMatch
-      : [section.testMatch]
-    : [];
-  for (const match of matches) {
-    args.push(match);
-  }
-
-  return args;
+function printHelp(): void {
+  process.stdout.write(`@haakco/test-sections-playwright\n\n`);
+  process.stdout.write(`Usage: haakco-test-sections [options]\n\n`);
+  process.stdout.write(`Options:\n`);
+  process.stdout.write(`  --list               List configured test sections\n`);
+  process.stdout.write(`  --validate           Validate section coverage by files\n`);
+  process.stdout.write(
+    `  --section <name>     Run only one or more section ids (repeat or comma-separated)\n`,
+  );
+  process.stdout.write(`  --parallel <n>       Max concurrent non-serial sections\n`);
+  process.stdout.write(`  --shard <x/y>        Forward shard to Playwright\n`);
+  process.stdout.write(
+    `  -c, --config <path>  Section config path (default: ./e2e-sections.config.ts)\n`,
+  );
+  process.stdout.write(`  -h, --help           Show help\n`);
 }
 
 async function runPlaywrightSection(
@@ -345,22 +105,7 @@ async function runPlaywrightSection(
   playwrightConfigPath: string,
   shard?: string,
 ): Promise<SectionResult> {
-  const args = ['exec', 'playwright', 'test', '-c', playwrightConfigPath];
-
-  const selectors = sectionArgs(section);
-  args.push(...selectors);
-
-  if (section.grep) {
-    args.push('--grep', section.grep);
-  }
-
-  for (const project of section.projects ?? []) {
-    args.push('--project', project);
-  }
-
-  if (shard) {
-    args.push('--shard', shard);
-  }
+  const args = buildSectionCommand(section, projectRoot, playwrightConfigPath, shard);
 
   process.stdout.write(
     `\n==> Running section "${section.id}"${section.serial ? ' (serial)' : ''}\n`,
@@ -388,7 +133,7 @@ async function runPlaywrightSection(
   });
 
   const durationMs = Date.now() - startTime;
-  const status = exitCode === 0 ? 'passed' : 'failed';
+  const status: SectionResult['status'] = exitCode === 0 ? 'passed' : 'failed';
 
   const durationLabel = formatDuration(durationMs);
   const statusLabel = status === 'passed' ? '✓ PASSED' : '✗ FAILED';
@@ -397,74 +142,7 @@ async function runPlaywrightSection(
   return { sectionId: section.id, status, durationMs, exitCode };
 }
 
-function formatDuration(ms: number): string {
-  if (ms < 1000) return `${ms}ms`;
-  const seconds = ms / 1000;
-  if (seconds < 60) return `${seconds.toFixed(1)}s`;
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.round(seconds % 60);
-  return `${minutes}m ${remainingSeconds}s`;
-}
-
-async function runConcurrentSections(
-  sections: PlaywrightTestSection[],
-  concurrency: number,
-  runner: (section: PlaywrightTestSection) => Promise<SectionResult>,
-): Promise<SectionResult[]> {
-  if (sections.length === 0) {
-    return [];
-  }
-
-  const results: SectionResult[] = [];
-  let nextIndex = 0;
-
-  async function worker(): Promise<void> {
-    while (nextIndex < sections.length) {
-      const current = nextIndex;
-      nextIndex += 1;
-      try {
-        const result = await runner(sections[current]);
-        results.push(result);
-      } catch (_error) {
-        results.push({
-          sectionId: sections[current].id,
-          status: 'failed',
-          durationMs: 0,
-          exitCode: null,
-        });
-      }
-    }
-  }
-
-  const workers = Array.from({ length: Math.min(concurrency, sections.length) }, () => worker());
-  await Promise.all(workers);
-  return results;
-}
-
-function selectSections(
-  allSections: PlaywrightTestSection[],
-  sectionIds: string[],
-): PlaywrightTestSection[] {
-  if (sectionIds.length === 0) {
-    return allSections;
-  }
-
-  const wanted = new Set(sectionIds);
-  const selected = allSections.filter((section) => wanted.has(section.id));
-
-  const missing = sectionIds.filter(
-    (sectionId) => !selected.some((section) => section.id === sectionId),
-  );
-  if (missing.length > 0) {
-    throw new Error(`Unknown section id(s): ${missing.join(', ')}`);
-  }
-
-  return selected;
-}
-
-async function run(): Promise<void> {
-  const options = parseArgs(process.argv.slice(2));
-
+async function run(options: CliOptions): Promise<void> {
   if (options.help) {
     printHelp();
     return;
@@ -577,7 +255,8 @@ function printSummary(results: SectionResult[], totalMs: number): void {
 
 async function main(): Promise<void> {
   try {
-    await run();
+    const options = parseArgs(process.argv.slice(2));
+    await run(options);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     process.stderr.write(`${message}\n`);
@@ -585,4 +264,16 @@ async function main(): Promise<void> {
   }
 }
 
-await main();
+async function isInvokedAsEntry(): Promise<boolean> {
+  try {
+    const argvReal = await realpath(process.argv[1]);
+    const moduleReal = await realpath(new URL(import.meta.url));
+    return argvReal === moduleReal;
+  } catch {
+    return false;
+  }
+}
+
+if (await isInvokedAsEntry()) {
+  await main();
+}
