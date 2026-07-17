@@ -18,3 +18,6 @@ fixtures/**/tests/e2e/.auth/*.json
 
 # logs
 *.log
+
+# opencode session data (local-only, never committed)
+.opencode/

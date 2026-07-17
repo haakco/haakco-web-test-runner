@@ -12,6 +12,7 @@ export interface CoverageResult {
 export declare const DEFAULT_CONFIG_FILE = "e2e-sections.config.ts";
 export declare function parseArgs(rawArgv: string[]): CliOptions;
 export declare function parsePositiveInteger(value: string, flagName: string): number;
+export declare function validateShard(value: string): string;
 export declare function normalizePath(value: string): string;
 export declare function globToRegExp(glob: string): RegExp;
 export declare function resolveSectionFiles(section: PlaywrightTestSection, discoveredFiles: string[], testDirAbsolute: string, projectRoot: string): Set<string>;

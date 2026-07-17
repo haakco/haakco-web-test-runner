@@ -63,12 +63,12 @@ export function parseArgs(rawArgv) {
             if (!value) {
                 throw new Error('Missing value for --shard');
             }
-            options.shard = value;
+            options.shard = validateShard(value);
             i += 1;
             continue;
         }
         if (arg.startsWith('--shard=')) {
-            options.shard = arg.split('=')[1] ?? '';
+            options.shard = validateShard(arg.split('=')[1] ?? '');
             continue;
         }
         if (arg === '--config' || arg === '-c') {
@@ -94,6 +94,19 @@ export function parsePositiveInteger(value, flagName) {
         throw new Error(`${flagName} must be a positive integer`);
     }
     return parsed;
+}
+export function validateShard(value) {
+    if (!/^\d+\/\d+$/.test(value)) {
+        throw new Error(`--shard must match x/y where x and y are positive integers (got: ${value})`);
+    }
+    const [current, total] = value.split('/').map((n) => Number.parseInt(n, 10));
+    if (current <= 0 || total <= 0) {
+        throw new Error(`--shard values must be positive integers (got: ${value})`);
+    }
+    if (current > total) {
+        throw new Error(`--shard current (${current}) must be <= total (${total})`);
+    }
+    return value;
 }
 export function normalizePath(value) {
     return value.split(path.sep).join('/');
@@ -186,7 +199,10 @@ export function sectionArgs(section) {
 export function buildSectionCommand(section, _projectRoot, playwrightConfigPath, shard) {
     const args = ['exec', 'playwright', 'test', '-c', playwrightConfigPath];
     args.push(...sectionArgs(section));
-    if (section.grep) {
+    if (section.grep !== undefined) {
+        if (section.grep.length === 0 || section.grep.startsWith('-')) {
+            throw new Error(`Section "${section.id}" has invalid --grep value: must be non-empty and not start with '-'`);
+        }
         args.push('--grep', section.grep);
     }
     for (const project of section.projects ?? []) {

@@ -13,6 +13,7 @@ import {
   sectionArgs,
   selectSections,
   validateCoverage,
+  validateShard,
 } from './runner.js';
 import type { PlaywrightTestSection } from './types.js';
 
@@ -91,6 +92,13 @@ describe('parseArgs', () => {
   test('parses --shard=value form', () => {
     const opts = parseArgs(['--shard=2/4']);
     assert.equal(opts.shard, '2/4');
+  });
+
+  test('rejects malformed --shard', () => {
+    assert.throws(() => parseArgs(['--shard', 'abc']), /--shard must match x\/y/);
+    assert.throws(() => parseArgs(['--shard', '1']), /--shard must match x\/y/);
+    assert.throws(() => parseArgs(['--shard', '0/2']), /must be positive integers/);
+    assert.throws(() => parseArgs(['--shard', '3/2']), /current.*must be <= total/);
   });
 
   test('parses --config and -c aliases', () => {
@@ -411,6 +419,47 @@ describe('buildSectionCommand', () => {
     const section: PlaywrightTestSection = { id: 'one', testFiles: ['tests/a.spec.ts'] };
     const args = buildSectionCommand(section, projectRoot, playwrightConfigPath);
     assert.equal(args.includes('--shard'), false);
+  });
+
+  test('rejects empty or leading-dash --grep values', () => {
+    assert.throws(
+      () =>
+        buildSectionCommand(
+          { id: 'x', testFiles: ['a.spec.ts'], grep: '' },
+          projectRoot,
+          playwrightConfigPath,
+        ),
+      /invalid --grep value/,
+    );
+    assert.throws(
+      () =>
+        buildSectionCommand(
+          { id: 'x', testFiles: ['a.spec.ts'], grep: '-bad' },
+          projectRoot,
+          playwrightConfigPath,
+        ),
+      /invalid --grep value/,
+    );
+  });
+});
+
+describe('validateShard', () => {
+  test('accepts well-formed x/y values', () => {
+    assert.equal(validateShard('1/2'), '1/2');
+    assert.equal(validateShard('2/4'), '2/4');
+  });
+
+  test('rejects malformed input', () => {
+    assert.throws(() => validateShard('abc'), /must match x\/y/);
+    assert.throws(() => validateShard('1'), /must match x\/y/);
+    assert.throws(() => validateShard('1/'), /must match x\/y/);
+    assert.throws(() => validateShard('/2'), /must match x\/y/);
+  });
+
+  test('rejects zero or inverted values', () => {
+    assert.throws(() => validateShard('0/2'), /must be positive integers/);
+    assert.throws(() => validateShard('2/0'), /must be positive integers/);
+    assert.throws(() => validateShard('3/2'), /current.*must be <= total/);
   });
 });
 
