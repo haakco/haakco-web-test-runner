@@ -1,3 +1,6 @@
 packages:
   - 'packages/*'
   - 'fixtures/*'
+
+onlyBuiltDependencies:
+  - esbuild
