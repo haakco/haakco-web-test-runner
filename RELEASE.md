@@ -22,16 +22,16 @@ tag:
 
 ```bash
 # Git dependency, pinned to a specific tag
-pnpm add 'github:haakco/web-test-runner#v1.3.0'
+pnpm add 'github:haakco/haakco-web-test-runner#v1.3.0'
 # or
-npm install 'github:haakco/web-test-runner#v1.3.0'
+npm install 'github:haakco/haakco-web-test-runner#v1.3.0'
 ```
 
 For a clean tarball install (the same shape `pnpm pack` produces), use the
 immutable commit SHA or the matching tag:
 
 ```bash
-pnpm add 'github:haakco/web-test-runner#v1.3.0'
+pnpm add 'github:haakco/haakco-web-test-runner#v1.3.0'
 ```
 
 Do not invent a Docker-style `v1` alias for a Git dependency. Use the exact tag.
