@@ -143,16 +143,50 @@ discover whether the candidate works.
 
 ## Terminal Checklist
 
-- [ ] Repository tag/package/artifact version rule documented and mechanically checked.
-- [ ] Playwright package metadata, changeset, and changelog agree.
-- [ ] `pnpm test:packages` runs real behavior tests rather than a placeholder or empty package set.
-- [ ] Local and CI commands share one frozen, pinned toolchain path.
-- [ ] Public API, forbidden-import, simple-consumer, multi-role, and Laravel scaffold portability gates pass.
-- [ ] Exact release candidate installs and runs outside the workspace.
-- [ ] One reviewed release/tag published and verified against its immutable commit.
-- [ ] `cb` and `awthy` receive exact upgrade and rollback handoffs; TrackLab ownership remains in `tlm`.
-- [ ] No consumer code, duration policy, automatic shard growth, or Laravel replacement entered the package.
-- [ ] Plan index updated and completed plan archived according to the repository's adopted plan convention.
+- [x] Repository tag/package/artifact version rule documented and mechanically checked.
+- [x] Playwright package metadata, changeset, and changelog agree.
+- [x] `pnpm test:packages` runs real behavior tests rather than a placeholder or empty package set.
+- [x] Local and CI commands share one frozen, pinned toolchain path.
+- [x] Public API, forbidden-import, simple-consumer, multi-role, and Laravel scaffold portability gates pass.
+- [x] Exact release candidate installs and runs outside the workspace.
+- [x] One reviewed release/tag published and verified against its immutable commit.
+- [x] `cb` and `awthy` receive exact upgrade and rollback handoffs; TrackLab ownership remains in `tlm`.
+- [x] No consumer code, duration policy, automatic shard growth, or Laravel replacement entered the package.
+- [x] Plan index updated and completed plan archived according to the repository's adopted plan convention.
+
+## Execution Evidence (Closeout 2026-07-18)
+
+- Milestone 1 (version contract): `RELEASE.md` documents tag/package/changeset rule;
+  `ci/release/check-version-contract.sh` enforces it; `packages/test-sections-playwright/package.json#version` set to
+  `1.3.0`; `CHANGELOG.md` 1.3.0 entry added; `.changeset/release-contract-1.3.0.md` added; `biome.json` schema bumped
+  2.4.15 → 2.4.16. Mechanical check passes locally.
+- Milestone 2 (behavior tests): pure helpers extracted in `packages/test-sections-playwright/src/runner.ts`; 60 node:test
+  cases in `src/runner.test.ts` cover config definition, duplicate/missing coverage, filtering, serial ordering, bounded
+  parallelism, failure propagation, CLI parsing, `--shard`/`--grep` validation, and command construction. All pass via
+  `pnpm test:packages`. `tsx` added as dev dependency for the node:test loader; build excludes `src/**/*.test.ts`.
+- Milestone 3 (CI/local alignment): `pnpm install --frozen-lockfile` enforced in workflows and locally; pnpm `10.6.2` pin
+  removed from `portability-consumers.yml`; `library-quality.yml` runs the full quality gate set; root `package.json`
+  scripts replaced placeholder `test` with `pnpm run test:packages` and added `quality` alias; `run-quality-gates.sh`
+  installs → lint → builds → tests packages → checks public API → checks forbidden imports → verifies version contract
+  → runs Playwright and Laravel consumer fixtures.
+- Milestone 4 (artifact verification): `pnpm pack` produces `/tmp/haakco-test-sections-playwright-1.3.0.tgz` with
+  version `1.3.0`, expected `dist/`, `README.md`, and preserved CLI shebang. Clean `/tmp/clean-fixture` end-to-end install
+  via documented reference succeeds for `--list`, `--validate`, and a full section run.
+- Milestone 5 (publish + handoff): annotated tag `v1.3.0` created at commit `503e81f` and pushed to
+  `origin`. `docs/consumer-upgrade-v1.3.0.md` records the install reference
+  (`github:haakco/haakco-web-test-runner#v1.3.0`), lockfile expectation, one-line rollback to `v1.2.0`, and per-consumer
+  coordination for `cb`, `awthy`, and `TrackLab/tlm`.
+- Audits: plan completeness (this file's terminal checklist, evidenced above), security (one actionable finding —
+  `esbuild` postinstall approval moved from `package.json#pnpm` to `pnpm-workspace.yaml` so pnpm 10.30.3 actually
+  enforces it, fixed at c59fe77), and code excellence (no `.skills/haakco-code-excellence/` directory present in
+  workspace — N/A). No database changes (no `.sql`, migrations, or schema files) — N/A for the database-table-patterns
+  audit.
+- Commits since `v1.2.0`: `000ba1b` (release contract docs), `4402cdd` (behavior tests + refactor),
+  `669936a` (CI/local alignment), `f04c371` (review fixes), `503e81f` (canonical repo name), `c39658c` (archive),
+  `c59fe77` (esbuild postinstall fix).
+- Verification commands retained: `pnpm test:packages` (60/60 pass), `./ci/release/check-version-contract.sh` (pass),
+  `./ci/quality/run-quality-gates.sh` (full green at c59fe77), remote tag verification via
+  `git ls-remote --tags origin v1.3.0`.
 
 ## Risks and Deferred Work
 
