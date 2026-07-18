@@ -75,3 +75,4 @@
 - Independent review: spec, code-quality, build-pipeline, and security review found no concrete blockers. The review confirmed actual Node 20 consumer execution and Changesets compatibility.
 - Release sequencing: the `1.3.2` changeset is consumed. The version contract will be rerun after the release candidate commit so HEAD is no longer the already-tagged `v1.3.1` commit.
 - Remote candidate evidence: Library Quality run `29625199309` passed and both Dependabot alerts closed. Portability run `29625199282` passed TypeScript config loading, then failed because the ephemeral runner lacked Playwright Chromium build `1208`; the quality owner now installs the pinned Chromium before running consumers.
+- CI cost: the installer is delayed until immediately before browser consumers and uses Playwright's `--only-shell` mode, avoiding downloads on earlier gate failures and omitting the unused full browser binary.

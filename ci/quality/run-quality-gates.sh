@@ -8,9 +8,6 @@ cd "$ROOT_DIR"
 echo "Installing workspace dependencies"
 pnpm install --frozen-lockfile
 
-echo "Ensuring Playwright Chromium is installed"
-pnpm --dir fixtures/consumer-simple exec playwright install chromium
-
 echo "Running lint"
 pnpm run lint:biome
 
@@ -29,6 +26,9 @@ echo "Checking package source for forbidden consumer imports"
 echo "Checking release version contract"
 ./ci/release/test-version-contract.sh
 ./ci/release/check-version-contract.sh
+
+echo "Ensuring Playwright Chromium headless shell is installed"
+pnpm --dir fixtures/consumer-simple exec playwright install --only-shell chromium
 
 echo "Running Playwright consumer portability checks"
 ./ci/portability/run-playwright-consumer.sh
