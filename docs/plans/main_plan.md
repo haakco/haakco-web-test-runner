@@ -16,6 +16,7 @@ the same change.
 
 | Plan | Released tag | Archive |
 | --- | --- | --- |
+| [Release Contract Audit Fixes](../../archive/docs/plans/2026-07-18_0301_2026-07-18_0256_release_contract_audit_fixes_plan.md) | `v1.3.1` | [archive link](../../archive/docs/plans/2026-07-18_0301_2026-07-18_0256_release_contract_audit_fixes_plan.md) |
 | [Playwright Runner Release Contract Plan](../../archive/docs/plans/2026-07-18_0144_2026-07-17_playwright_runner_release_contract_plan.md) | `v1.3.0` (commit `503e81f`) | [archive link](../../archive/docs/plans/2026-07-18_0144_2026-07-17_playwright_runner_release_contract_plan.md) |
 
 ## Consumer Coordination

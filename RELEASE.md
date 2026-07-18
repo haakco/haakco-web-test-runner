@@ -22,16 +22,16 @@ tag:
 
 ```bash
 # Git dependency, pinned to a specific tag
-pnpm add 'github:haakco/haakco-web-test-runner#v1.3.0'
+pnpm add 'github:haakco/haakco-web-test-runner#v1.3.1'
 # or
-npm install 'github:haakco/haakco-web-test-runner#v1.3.0'
+npm install 'github:haakco/haakco-web-test-runner#v1.3.1'
 ```
 
 For a clean tarball install (the same shape `pnpm pack` produces), use the
 immutable commit SHA or the matching tag:
 
 ```bash
-pnpm add 'github:haakco/haakco-web-test-runner#v1.3.0'
+pnpm add 'github:haakco/haakco-web-test-runner#v1.3.1'
 ```
 
 Do not invent a Docker-style `v1` alias for a Git dependency. Use the exact tag.
@@ -39,8 +39,9 @@ Do not invent a Docker-style `v1` alias for a Git dependency. Use the exact tag.
 ## Release Process
 
 1. Add a changeset under `.changeset/` describing the change.
-2. Run `pnpm version` (which calls `changeset version`) to align the package
-   version and update CHANGELOGs.
+2. Run `pnpm run version` (which calls `changeset version`) to align the package
+   version, update CHANGELOGs, and consume the included changesets. Confirm the
+   release's changeset files were removed before tagging.
 3. Run `ci/release/check-version-contract.sh` to confirm the tag/package/CHANGELOG
    agree.
 4. Run `./ci/quality/run-quality-gates.sh` and the full test suite.
@@ -53,7 +54,7 @@ Do not invent a Docker-style `v1` alias for a Git dependency. Use the exact tag.
 - Minor releases (`x.Y.0`) add behavior but preserve the public API and CLI
   surface documented in `packages/test-sections-playwright/README.md`.
 - Major releases (`X.0.0`) may change the public API or CLI shape.
-- Rollback: pin to the previous Git tag or commit SHA. The tag is immutable.
+- Rollback from `v1.3.1`: pin to `v1.3.0` or its commit SHA. Tags are immutable.
 
 ## Maintained Aliases
 
@@ -69,7 +70,8 @@ The check script verifies:
    `version` field in `packages/test-sections-playwright/package.json`.
 2. The latest CHANGELOG entry under the package heading equals `<version>`.
 3. If the package version has bumped since the last tag, the script exits with a
-   clear instruction to tag and publish.
+   clear instruction to tag and publish, and rejects any release changeset that
+   `pnpm run version` did not consume.
 
-The check is part of `ci/quality/run-quality-gates.sh` and runs in CI on every
-push and pull request.
+The check and its isolated Semantic Versioning regression tests are part of
+`ci/quality/run-quality-gates.sh` and run in CI on every push and pull request.

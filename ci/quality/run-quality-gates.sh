@@ -24,6 +24,7 @@ echo "Checking package source for forbidden consumer imports"
 ./ci/portability/check-no-consumer-imports.sh
 
 echo "Checking release version contract"
+./ci/release/test-version-contract.sh
 ./ci/release/check-version-contract.sh
 
 echo "Running Playwright consumer portability checks"

@@ -1,5 +1,13 @@
 # @haakco/test-sections-playwright
 
+## 1.3.1
+
+### Patch Changes
+
+- Make the next-release contract safe by consuming completed changesets, comparing
+  versions with Semantic Versioning precedence, and regression-testing release tag
+  selection in local and CI quality gates.
+
 ## 1.3.0
 
 ### Minor Changes
