@@ -54,12 +54,12 @@
 
 - [x] Node 20 consumer failure reproduced and regression protected.
 - [x] TypeScript config loading works through the package CLI on Node 20.
-- [ ] All open Dependabot alerts are remediated locally and remotely.
+- [x] All open Dependabot alerts are remediated locally and remotely.
 - [x] Full local CI-equivalent and security validation passes.
-- [ ] Plan evidence is complete, plan is archived, and index links are updated.
-- [ ] Patch version is committed and pushed to `main`.
-- [ ] Annotated production tag is pushed and resolves to the release commit.
-- [ ] All release-commit GitHub Actions are green.
+- [x] Plan evidence is complete, plan is archived, and index links are updated.
+- [x] Patch version is committed and pushed to `main`.
+- [x] Annotated production tag is pushed and resolves to the release commit.
+- [x] All release-commit GitHub Actions are green.
 
 ## Risks and Deferred Work
 
@@ -76,3 +76,5 @@
 - Release sequencing: the `1.3.2` changeset is consumed. The version contract will be rerun after the release candidate commit so HEAD is no longer the already-tagged `v1.3.1` commit.
 - Remote candidate evidence: Library Quality run `29625199309` passed and both Dependabot alerts closed. Portability run `29625199282` passed TypeScript config loading, then failed because the ephemeral runner lacked Playwright Chromium build `1208`; the quality owner now installs the pinned Chromium before running consumers.
 - CI cost: the installer is delayed until immediately before browser consumers and uses Playwright's `--only-shell` mode, avoiding downloads on earlier gate failures and omitting the unused full browser binary.
+- Final remote proof: Library Quality run `29625398643` and Portability Consumers run `29625398641` passed for release commit `9b8b69f`; the Dependabot API returned zero open alerts.
+- Production tag proof: annotated tag `v1.3.2` has tag object `94cfa8b` and peels to release commit `9b8b69fe5ff569fc48ceae15ab38146bac90a419`; `git ls-remote --tags origin` confirmed both objects.

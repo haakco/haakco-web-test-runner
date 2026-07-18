@@ -10,12 +10,13 @@ the same change.
 
 | Plan | Status | Next gate |
 | --- | --- | --- |
-| [CI and Security Patch Release](2026-07-18_0319_ci_security_patch_release_plan.md) | In progress | Reproduce Node 20 config-loading failure and remediate dependency alerts |
+| _(none)_ | — | — |
 
 ## Recently Completed
 
 | Plan | Released tag | Archive |
 | --- | --- | --- |
+| [CI and Security Patch Release](../../archive/docs/plans/2026-07-18_0339_2026-07-18_0319_ci_security_patch_release_plan.md) | `v1.3.2` (commit `9b8b69f`) | [archive link](../../archive/docs/plans/2026-07-18_0339_2026-07-18_0319_ci_security_patch_release_plan.md) |
 | [Release Contract Audit Fixes](../../archive/docs/plans/2026-07-18_0301_2026-07-18_0256_release_contract_audit_fixes_plan.md) | `v1.3.1` | [archive link](../../archive/docs/plans/2026-07-18_0301_2026-07-18_0256_release_contract_audit_fixes_plan.md) |
 | [Playwright Runner Release Contract Plan](../../archive/docs/plans/2026-07-18_0144_2026-07-17_playwright_runner_release_contract_plan.md) | `v1.3.0` (commit `503e81f`) | [archive link](../../archive/docs/plans/2026-07-18_0144_2026-07-17_playwright_runner_release_contract_plan.md) |
 
