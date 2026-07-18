@@ -8,6 +8,9 @@ cd "$ROOT_DIR"
 echo "Installing workspace dependencies"
 pnpm install --frozen-lockfile
 
+echo "Ensuring Playwright Chromium is installed"
+pnpm --dir fixtures/consumer-simple exec playwright install chromium
+
 echo "Running lint"
 pnpm run lint:biome
 

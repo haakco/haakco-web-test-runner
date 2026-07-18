@@ -15,6 +15,7 @@
 - Required work: make the CLI's documented Node 20 runtime own TypeScript config loading rather than relying on Node 24 behavior.
 - Required work: constrain all `js-yaml` resolutions to patched 4.2.0 and verify the legacy Changesets caller remains compatible.
 - Required work: create a new patch version and tag because the user requested a production build tag after behavior and dependency changes.
+- Required work: the first release-candidate CI run reached browser execution and proved the ephemeral ARC runner has no matching Chromium binary. The shared quality gate must provision the pinned fixture browser before consumer execution; this is required for the existing acceptance path, not a new test expansion.
 
 ## Milestones
 
@@ -73,3 +74,4 @@
 - Toolchain proof: `pnpm install --frozen-lockfile`, `pnpm run lint`, release-contract regression tests, and `git diff --check` passed.
 - Independent review: spec, code-quality, build-pipeline, and security review found no concrete blockers. The review confirmed actual Node 20 consumer execution and Changesets compatibility.
 - Release sequencing: the `1.3.2` changeset is consumed. The version contract will be rerun after the release candidate commit so HEAD is no longer the already-tagged `v1.3.1` commit.
+- Remote candidate evidence: Library Quality run `29625199309` passed and both Dependabot alerts closed. Portability run `29625199282` passed TypeScript config loading, then failed because the ephemeral runner lacked Playwright Chromium build `1208`; the quality owner now installs the pinned Chromium before running consumers.
