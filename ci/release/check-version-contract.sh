@@ -5,6 +5,9 @@ set -euo pipefail
 #   - The latest repository tag (if any) must be v<version> where <version>
 #     equals packages/test-sections-playwright/package.json#version.
 #   - The latest CHANGELOG entry for the package must equal <version>.
+#   - If the package version is greater than the latest tag, a changeset
+#     file under .changeset/ (excluding README) must reference the
+#     package. This guards the documented intent of the pending bump.
 #   - If the package version is greater than the latest tag, the script
 #     reports the pending release and exits 0 (development state). On a
 #     commit that already carries a tag, the equality must hold exactly.
@@ -12,6 +15,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 PACKAGE_JSON="$ROOT_DIR/packages/test-sections-playwright/package.json"
 CHANGELOG="$ROOT_DIR/packages/test-sections-playwright/CHANGELOG.md"
+CHANGESET_DIR="$ROOT_DIR/.changeset"
 
 if [[ ! -f "$PACKAGE_JSON" ]]; then
 	echo "Version contract check failed: missing $PACKAGE_JSON" >&2
@@ -72,6 +76,11 @@ if [[ -n "$TAG_VERSION" ]]; then
 		if [[ "$PACKAGE_VERSION" < "$TAG_VERSION" ]]; then
 			echo "Version contract check failed: package.json ($PACKAGE_VERSION) is older than latest tag ($LATEST_TAG)" >&2
 			failures=$((failures + 1))
+		elif [[ "$PACKAGE_VERSION" > "$TAG_VERSION" ]]; then
+			if [[ ! -d "$CHANGESET_DIR" ]] || ! grep -rl "@haakco/test-sections-playwright" "$CHANGESET_DIR" --include="*.md" --exclude="README.md" >/dev/null 2>&1; then
+				echo "Version contract check failed: package.json ($PACKAGE_VERSION) is newer than latest tag ($LATEST_TAG) but no changeset references @haakco/test-sections-playwright in .changeset/" >&2
+				failures=$((failures + 1))
+			fi
 		fi
 	fi
 fi

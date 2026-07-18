@@ -165,10 +165,12 @@ discover whether the candidate works.
   parallelism, failure propagation, CLI parsing, `--shard`/`--grep` validation, and command construction. All pass via
   `pnpm test:packages`. `tsx` added as dev dependency for the node:test loader; build excludes `src/**/*.test.ts`.
 - Milestone 3 (CI/local alignment): `pnpm install --frozen-lockfile` enforced in workflows and locally; pnpm `10.6.2` pin
-  removed from `portability-consumers.yml`; `library-quality.yml` runs the full quality gate set; root `package.json`
-  scripts replaced placeholder `test` with `pnpm run test:packages` and added `quality` alias; `run-quality-gates.sh`
-  installs → lint → builds → tests packages → checks public API → checks forbidden imports → verifies version contract
-  → runs Playwright and Laravel consumer fixtures.
+  removed from `portability-consumers.yml`; CI runs the full gate set across two workflows on `pull_request` and `push`:
+  `library-quality.yml` runs the fast gates (`pnpm install --frozen-lockfile` → `pnpm lint` → `pnpm run build:packages`
+  → `pnpm run test:packages` → version contract check), and `portability-consumers.yml` runs the heavier portable
+  consumer gates via `./ci/quality/run-quality-gates.sh` (install → lint → build → test:packages → public API check →
+  forbidden-import check → version contract check → Playwright consumer fixture → Laravel scaffold consumer fixture).
+  Root `package.json` scripts: `test` runs `test:packages`, `quality` aliases the local gates script.
 - Milestone 4 (artifact verification): `pnpm pack` produces `/tmp/haakco-test-sections-playwright-1.3.0.tgz` with
   version `1.3.0`, expected `dist/`, `README.md`, and preserved CLI shebang. Clean `/tmp/clean-fixture` end-to-end install
   via documented reference succeeds for `--list`, `--validate`, and a full section run.
@@ -181,9 +183,11 @@ discover whether the candidate works.
   enforces it, fixed at c59fe77), and code excellence (no `.skills/haakco-code-excellence/` directory present in
   workspace — N/A). No database changes (no `.sql`, migrations, or schema files) — N/A for the database-table-patterns
   audit.
-- Commits since `v1.2.0`: `000ba1b` (release contract docs), `4402cdd` (behavior tests + refactor),
+- Commits implementing v1.3.0 (oldest → newest): `000ba1b` (release contract docs), `4402cdd` (behavior tests + refactor),
   `669936a` (CI/local alignment), `f04c371` (review fixes), `503e81f` (canonical repo name), `c39658c` (archive),
-  `c59fe77` (esbuild postinstall fix).
+  `c59fe77` (esbuild postinstall fix). Other commits on `main` between `v1.2.0` and `v1.3.0` (`1a8e2bd`, `2cba0f3`,
+  `f63a0fd`, `915387a`, `d8373fe`, `281f067`, `f9ed129`) are unrelated housekeeping (CI runner pin, biome single-quote
+  enforcement, Dependabot picomatch bump and merge, dependabot log, skills docs, v1.3.0 closeout).
 - Verification commands retained: `pnpm test:packages` (60/60 pass), `./ci/release/check-version-contract.sh` (pass),
   `./ci/quality/run-quality-gates.sh` (full green at c59fe77), remote tag verification via
   `git ls-remote --tags origin v1.3.0`.
