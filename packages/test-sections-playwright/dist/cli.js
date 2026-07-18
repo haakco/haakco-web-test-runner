@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import 'tsx/esm';
 import { spawn } from 'node:child_process';
 import { readdir, realpath } from 'node:fs/promises';
 import path from 'node:path';

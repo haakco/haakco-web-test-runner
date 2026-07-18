@@ -10,7 +10,7 @@ the same change.
 
 | Plan | Status | Next gate |
 | --- | --- | --- |
-| _(none)_ | — | — |
+| [CI and Security Patch Release](2026-07-18_0319_ci_security_patch_release_plan.md) | In progress | Reproduce Node 20 config-loading failure and remediate dependency alerts |
 
 ## Recently Completed
 

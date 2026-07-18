@@ -22,16 +22,16 @@ tag:
 
 ```bash
 # Git dependency, pinned to a specific tag
-pnpm add 'github:haakco/haakco-web-test-runner#v1.3.1'
+pnpm add 'github:haakco/haakco-web-test-runner#v1.3.2'
 # or
-npm install 'github:haakco/haakco-web-test-runner#v1.3.1'
+npm install 'github:haakco/haakco-web-test-runner#v1.3.2'
 ```
 
 For a clean tarball install (the same shape `pnpm pack` produces), use the
 immutable commit SHA or the matching tag:
 
 ```bash
-pnpm add 'github:haakco/haakco-web-test-runner#v1.3.1'
+pnpm add 'github:haakco/haakco-web-test-runner#v1.3.2'
 ```
 
 Do not invent a Docker-style `v1` alias for a Git dependency. Use the exact tag.
@@ -54,7 +54,7 @@ Do not invent a Docker-style `v1` alias for a Git dependency. Use the exact tag.
 - Minor releases (`x.Y.0`) add behavior but preserve the public API and CLI
   surface documented in `packages/test-sections-playwright/README.md`.
 - Major releases (`X.0.0`) may change the public API or CLI shape.
-- Rollback from `v1.3.1`: pin to `v1.3.0` or its commit SHA. Tags are immutable.
+- Rollback from `v1.3.2`: pin to `v1.3.1` or its commit SHA. Tags are immutable.
 
 ## Maintained Aliases
 

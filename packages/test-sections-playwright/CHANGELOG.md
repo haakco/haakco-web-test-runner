@@ -1,5 +1,11 @@
 # @haakco/test-sections-playwright
 
+## 1.3.2
+
+### Patch Changes
+
+- Load TypeScript section and Playwright configuration on every supported Node.js version, and resolve vulnerable transitive `js-yaml` versions to the patched release.
+
 ## 1.3.1
 
 ### Patch Changes
