@@ -185,9 +185,11 @@ discover whether the candidate works.
   audit.
 - Commits implementing v1.3.0 (oldest → newest): `000ba1b` (release contract docs), `4402cdd` (behavior tests + refactor),
   `669936a` (CI/local alignment), `f04c371` (review fixes), `503e81f` (canonical repo name), `c39658c` (archive),
-  `c59fe77` (esbuild postinstall fix). Other commits on `main` between `v1.2.0` and `v1.3.0` (`1a8e2bd`, `2cba0f3`,
-  `f63a0fd`, `915387a`, `d8373fe`, `281f067`, `f9ed129`) are unrelated housekeeping (CI runner pin, biome single-quote
-  enforcement, Dependabot picomatch bump and merge, dependabot log, skills docs, v1.3.0 closeout).
+  `c59fe77` (esbuild postinstall fix), `f9ed129` (v1.3.0 closeout — plan evidence + contract dist restoration), and
+  `3e0a381` (post-release audit fixes: archive link paths, changeset check, two-workflow description, commit list
+  relabel). Other commits on `main` after `v1.2.0` that are not part of v1.3.0 (`1a8e2bd`, `2cba0f3`, `f63a0fd`,
+  `915387a`, `d8373fe`, `281f067`) are unrelated housekeeping (CI runner pin, biome single-quote enforcement, Dependabot
+  picomatch bump and merge, dependabot log, skills docs).
 - Verification commands retained: `pnpm test:packages` (60/60 pass), `./ci/release/check-version-contract.sh` (pass),
   `./ci/quality/run-quality-gates.sh` (full green at c59fe77), remote tag verification via
   `git ls-remote --tags origin v1.3.0`.
