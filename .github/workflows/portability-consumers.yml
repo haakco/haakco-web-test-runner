@@ -9,7 +9,13 @@ on:
 
 jobs:
   portability-consumers:
-    runs-on: self-hosted
+    runs-on: haakco-build
+    container:
+      image: ghcr.io/haakco/actions-runner:1
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+      options: --user root
     defaults:
       run:
         shell: bash --noprofile --norc -euo pipefail {0}
