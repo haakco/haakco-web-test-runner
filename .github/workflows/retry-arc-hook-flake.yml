@@ -1,0 +1,29 @@
+---
+name: Retry ARC container-hook flakes
+
+# The ARC Kubernetes container hook occasionally marks a successful job as failed with
+# "TypeError: Converting circular structure to JSON" during post-job cleanup, which is
+# actions/runner-container-hooks issue #329. The fix is merged upstream but unreleased, so a
+# re-run is the workaround. See haakco/stdFiles .github/workflows/retry-arc-hook-flake.yml for
+# the logic, and haakco/prod-infra .github/workflows/watch-arc-container-hook-fix.yml for the
+# check that tells us when the real fix ships and this can be deleted.
+#
+# The caller has to live here because workflow_run must name the workflows it watches, and those
+# names are repository-specific. Only the lane workflows are listed: "Dependabot Updates" is a
+# GitHub-native workflow that does not run on our runners, so the hook cannot affect it.
+
+# yamllint disable-line rule:truthy
+on:
+  workflow_run:
+    workflows:
+      - Library Quality
+      - Portability Consumers
+    types: [completed]
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  retry:
+    uses: haakco/stdFiles/.github/workflows/retry-arc-hook-flake.yml@main
