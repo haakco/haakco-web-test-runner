@@ -34,7 +34,10 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.3.36'
+
+      - name: Verify PHP 8.3.36
+        run: php -r 'if (PHP_VERSION_ID !== 80336) { fwrite(STDERR, "Expected PHP 8.3.36 (PHP_VERSION_ID 80336); got " . PHP_VERSION . " (PHP_VERSION_ID " . PHP_VERSION_ID . ")" . PHP_EOL); exit(1); }'
 
       - name: Run quality gates
         run: ./ci/quality/run-quality-gates.sh
